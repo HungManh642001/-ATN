@@ -101,10 +101,10 @@ class GaussianDiffusion(nn.Module):
         indices = list(range(self.steps))[::-1]
 
         # don't drop gender at test time
-        gender_mask = torch.zeros_like(gender).to(device)
+        gender_mask = th.zeros_like(gender).to(device)
 
         # don't drop age at test time
-        age_mask = torch.zeros_like(age).to(device)
+        age_mask = th.zeros_like(age).to(device)
 
         if self.noise_scale == 0.:
             for i in indices:
@@ -136,8 +136,8 @@ class GaussianDiffusion(nn.Module):
 
         terms = {}
 
-        gender_mask = torch.bernoulli(torch.zeros_like(gender) + 0.1).to(self.device)
-        age_mask = torch.bernoulli(torch.zeros_like(age) + 0.1).to(self.device)
+        gender_mask = th.bernoulli(torch.zeros_like(gender) + 0.1).to(self.device)
+        age_mask = th.bernoulli(torch.zeros_like(age) + 0.1).to(self.device)
 
         model_output = model(x_t, gender, age, gender_mask, age_mask, ts)
         target = {
