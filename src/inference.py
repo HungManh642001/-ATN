@@ -153,7 +153,7 @@ diffusion = gd.GaussianDiffusion(mean_type, args.noise_schedule, \
         args.noise_scale, args.noise_min, args.noise_max, args.steps, device).to(device)
 
 ### Build Autoencoder & MLP ###
-model_path = "checkpoints/Age+Gender/"
+model_path = "checkpoints/"
 
 if args.dataset == "ml-1m_clean":
     model_name = "ml-1m_0.0001lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate3_in[300]_out[]_lam0.005_dims[300]_emb10_ModelMeanType.EPSILON_steps20_scale0.1_min0.0001_max0.02_sample5_reweightTrue_log.pth"
