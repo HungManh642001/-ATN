@@ -136,8 +136,8 @@ class GaussianDiffusion(nn.Module):
 
         terms = {}
 
-        gender_mask = th.bernoulli(torch.zeros_like(gender) + 0.1).to(self.device)
-        age_mask = th.bernoulli(torch.zeros_like(age) + 0.1).to(self.device)
+        gender_mask = th.bernoulli(th.zeros_like(gender) + 0.1).to(self.device)
+        age_mask = th.bernoulli(th.zeros_like(age) + 0.1).to(self.device)
 
         model_output = model(x_t, gender, age, gender_mask, age_mask, ts)
         target = {
