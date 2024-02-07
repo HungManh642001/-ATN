@@ -43,8 +43,8 @@ def seed_worker(worker_id):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='yelp_clean', help='choose the dataset')
-parser.add_argument('--data_path', type=str, default='./datasets/', help='load data path')
-parser.add_argument('--emb_path', type=str, default='./datasets/')
+parser.add_argument('--data_path', type=str, default='../datasets/', help='load data path')
+parser.add_argument('--emb_path', type=str, default='../datasets/')
 parser.add_argument('--lr1', type=float, default=0.0001, help='learning rate for Autoencoder')
 parser.add_argument('--lr2', type=float, default=0.0001, help='learning rate for MLP')
 parser.add_argument('--wd1', type=float, default=0.0, help='weight decay for Autoencoder')
@@ -121,13 +121,13 @@ age = label_encoder.fit_transform(age)
 
 ### DATA LOADER
 
-train_dataset = data_utils.Conditional_DataDiffusion(torch.FloatTensor(train_data.A), torch.IntTensor(gender), torch.IntTensor(age)
+train_dataset = data_utils.Conditional_DataDiffusion(torch.FloatTensor(train_data.A), torch.IntTensor(gender), torch.IntTensor(age))
 
 train_loader = DataLoader(train_dataset, batch_size=args.batch_size, pin_memory=True, shuffle=True, num_workers=4, worker_init_fn=worker_init_fn)
 test_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False)
 
 if args.tst_w_val:
-    tv_dataset = data_utils.Conditional_DataDiffusion(torch.FloatTensor(train_data.A) + torch.FloatTensor(valid_y_data.A), torch.IntTensor(gender), torch.IntTensor(age)
+    tv_dataset = data_utils.Conditional_DataDiffusion(torch.FloatTensor(train_data.A) + torch.FloatTensor(valid_y_data.A), torch.IntTensor(gender), torch.IntTensor(age))
     test_twv_loader = DataLoader(tv_dataset, batch_size=args.batch_size, shuffle=False)
 mask_tv = train_data + valid_y_data
 
