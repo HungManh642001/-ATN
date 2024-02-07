@@ -77,6 +77,7 @@ parser.add_argument('--time_type', type=str, default='cat', help='cat or add')
 parser.add_argument('--mlp_dims', type=str, default='[300]', help='the dims for the DNN')
 parser.add_argument('--norm', type=bool, default=False, help='Normalize the input or not')
 parser.add_argument('--emb_size', type=int, default=10, help='timestep embedding size')
+parser.add_argument('--item_size', type=int, default=64, help='item embedding size')
 parser.add_argument('--mlp_act_func', type=str, default='tanh', help='the activation function for MLP')
 parser.add_argument('--optimizer2', type=str, default='AdamW', help='optimizer for MLP: Adam, AdamW, SGD, Adagrad, Momentum')
 
