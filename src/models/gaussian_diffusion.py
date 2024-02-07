@@ -268,6 +268,7 @@ class GaussianDiffusion(nn.Module):
         x = x.repeat(2, 1)
         t = t.repeat(2)
 
+        print(x.shape, t.shape)
         model_output = model(x, gender, age, gender_mask, age_mask, t)
 
         model_variance = self.posterior_variance
