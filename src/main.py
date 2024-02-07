@@ -42,7 +42,7 @@ def seed_worker(worker_id):
     np.random.seed(worker_seed)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='yelp_clean', help='choose the dataset')
+parser.add_argument('--dataset', type=str, default='ml-1m_clean', help='choose the dataset')
 parser.add_argument('--data_path', type=str, default='../datasets/ml-1m_clean/', help='load data path')
 parser.add_argument('--emb_path', type=str, default='../datasets/ml-1m_clean/')
 parser.add_argument('--lr1', type=float, default=0.0001, help='learning rate for Autoencoder')
@@ -82,7 +82,7 @@ parser.add_argument('--mlp_act_func', type=str, default='tanh', help='the activa
 parser.add_argument('--optimizer2', type=str, default='AdamW', help='optimizer for MLP: Adam, AdamW, SGD, Adagrad, Momentum')
 
 # params for diffusion
-parser.add_argument('--mean_type', type=str, default='x0', help='MeanType for diffusion: x0, eps')
+parser.add_argument('--mean_type', type=str, default='eps', help='MeanType for diffusion: x0, eps')
 parser.add_argument('--steps', type=int, default=20, help='diffusion steps')
 parser.add_argument('--noise_schedule', type=str, default='linear-var', help='the schedule for noise generating')
 parser.add_argument('--noise_scale', type=float, default=0.1, help='noise scale for noise generating')
