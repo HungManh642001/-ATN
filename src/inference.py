@@ -66,8 +66,6 @@ parser.add_argument('--classifier', type=str, default='age', help='conditional i
 
 args = parser.parse_args()
 
-args.data_path = args.data_path + args.dataset + '/'
-args.emb_path = args.emb_path + args.dataset + '/'
 if args.dataset == 'amazon-book_clean':
     args.steps = 5
     args.noise_scale = 0.5
