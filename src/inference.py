@@ -156,8 +156,8 @@ diffusion = gd.GaussianDiffusion(mean_type, args.noise_schedule, \
 model_path = "checkpoints/"
 
 if args.dataset == "ml-1m_clean":
-    model_name = "ml-1m_0.0001lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate3_in[300]_out[]_lam0.005_dims[300]_emb10_ModelMeanType.EPSILON_steps20_scale0.1_min0.0001_max0.02_sample5_reweightTrue_log.pth"
-    AE_name = "ml-1m_0.0001lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate3_in[300]_out[]_lam0.005_dims[300]_emb10_ModelMeanType.EPSILON_steps20_scale0.1_min0.0001_max0.02_sample5_reweightTrue_log_AE.pth"
+    model_name = "ml-1m_clean_0.0001lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate3_in[300]_out[]_lam0.03_dims[300]_emb10_eps_steps20_scale0.1_min0.0001_max0.02_sample5_reweightTrue_log.pth"
+    AE_name = "ml-1m_clean_0.0001lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate3_in[300]_out[]_lam0.03_dims[300]_emb10_eps_steps20_scale0.1_min0.0001_max0.02_sample5_reweightTrue_log_AE.pth"
 
 model = torch.load(model_path + model_name).to(device)
 Autoencoder = torch.load(model_path + AE_name).to(device)
