@@ -90,7 +90,7 @@ class GaussianDiffusion(nn.Module):
             / (1.0 - self.alphas_cumprod)
         )
 
-    def p_sample(self, model, x_start, c, steps, sampling_noise=True):
+    def p_sample(self, model, x_start, gender, age, steps, sampling_noise=False):
         assert steps <= self.steps, "Too much steps in inference."
         if steps == 0:
             x_t = x_start
@@ -100,18 +100,21 @@ class GaussianDiffusion(nn.Module):
 
         indices = list(range(self.steps))[::-1]
 
-        # don't drop c at test time
-        class_mask = torch.zeros_like(c).to(device)
+        # don't drop gender at test time
+        gender_mask = torch.zeros_like(gender).to(device)
+
+        # don't drop age at test time
+        age_mask = torch.zeros_like(age).to(device)
 
         if self.noise_scale == 0.:
             for i in indices:
                 t = th.tensor([i] * x_t.shape[0]).to(x_start.device)
-                x_t = model(x_t, c, class_mask, t)
+                x_t = model(x_t, gender, age, gender_mask, age_mask, t)
             return x_t
 
         for i in indices:
             t = th.tensor([i] * x_t.shape[0]).to(x_start.device)
-            out = self.p_mean_variance(model, x_t, c, class_mask, t)
+            out = self.p_mean_variance(model, x_t, gender, age, gender_mask, age_mask, t)
             if sampling_noise:
                 noise = th.randn_like(x_t)
                 nonzero_mask = (
@@ -122,7 +125,7 @@ class GaussianDiffusion(nn.Module):
                 x_t = out["mean"]
         return x_t
 
-    def training_losses(self, model, x_start, c, reweight=False):
+    def training_losses(self, model, x_start, gender, age, reweight=False):
         batch_size, device = x_start.size(0), x_start.device
         ts, pt = self.sample_timesteps(batch_size, device, 'importance')
         noise = th.randn_like(x_start)
@@ -133,9 +136,10 @@ class GaussianDiffusion(nn.Module):
 
         terms = {}
 
-        class_mask = torch.bernoulli(torch.zeros_like(c) + 0.1).to(self.device)
+        gender_mask = torch.bernoulli(torch.zeros_like(gender) + 0.1).to(self.device)
+        age_mask = torch.bernoulli(torch.zeros_like(age) + 0.1).to(self.device)
 
-        model_output = model(x_t, c, class_mask, ts)
+        model_output = model(x_t, gender, age, gender_mask, age_mask, ts)
         target = {
             ModelMeanType.START_X: x_start,
             ModelMeanType.EPSILON: noise,
@@ -242,7 +246,7 @@ class GaussianDiffusion(nn.Module):
         )
         return posterior_mean, posterior_variance, posterior_log_variance_clipped
 
-    def p_mean_variance(self, model, x, c, class_mask, t):
+    def p_mean_variance(self, model, x, gender, age, gender_mask, age_mask, t):
         """
         Apply the model to get p(x_{t-1} | x_t), as well as a prediction of
         the initial x, x_0.
@@ -251,14 +255,19 @@ class GaussianDiffusion(nn.Module):
         assert t.shape == (B, )
 
         # double the batch
-        c = c.repeat(2)
-        class_mask = class_mask.repeat(2)
-        class_mask[B:] = 1. # makes second half of batch context free
+        gender = gender.repeat(2)
+        gender_mask = gender_mask.repeat(2)
+        gender_mask[B:] = 1. # makes second half of batch context free
+
+        # double the batch
+        age = age.repeat(2)
+        age_mask = age_mask.repeat(2)
+        age_mask[B:] = 1. # makes second half of batch context free
 
         x = x.repeat(2, 1)
         t = t.repeat(2)
 
-        model_output = model(x, c, class_mask, t)
+        model_output = model(x, gender, age, gender_mask, age_mask, t)
 
         model_variance = self.posterior_variance
         model_log_variance = self.posterior_log_variance_clipped
@@ -280,9 +289,7 @@ class GaussianDiffusion(nn.Module):
         else:
             raise NotImplementedError(self.mean_type)
 
-        # model_mean, _, _ = self.q_posterior_mean_variance(x_start=pred_xstart, x_t=x, t=t)
-        model_mean, _, model_log_variance = self.q_posterior_mean_variance(x_start=pred_xstart, x_t=x, t=t)
-        model_log_variance = self._extract_into_tensor(model_log_variance, t, x.shape)
+        model_mean, _, _ = self.q_posterior_mean_variance(x_start=pred_xstart, x_t=x, t=t)
 
         # assert (
         #     model_mean.shape == model_log_variance.shape == pred_xstart.shape == x.shape
