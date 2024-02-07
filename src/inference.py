@@ -42,7 +42,7 @@ def seed_worker(worker_id):
     np.random.seed(worker_seed)
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', type=str, default='yelp_clean', help='choose the dataset')
+parser.add_argument('--dataset', type=str, default='ml-1m_clean', help='choose the dataset')
 parser.add_argument('--data_path', type=str, default='../datasets/ml-1m_clean/', help='load data path')
 parser.add_argument('--emb_path', type=str, default='../datasets/nl-1m_clean/')
 parser.add_argument('--batch_size', type=int, default=400)
