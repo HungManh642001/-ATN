@@ -43,8 +43,8 @@ def seed_worker(worker_id):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='yelp_clean', help='choose the dataset')
-parser.add_argument('--data_path', type=str, default='../datasets/', help='load data path')
-parser.add_argument('--emb_path', type=str, default='../datasets/')
+parser.add_argument('--data_path', type=str, default='../datasets/ml-1m_clean/', help='load data path')
+parser.add_argument('--emb_path', type=str, default='../datasets/nl-1m_clean/')
 parser.add_argument('--batch_size', type=int, default=400)
 parser.add_argument('--topN', type=str, default='[10, 20, 50, 100]')
 parser.add_argument('--tst_w_val', action='store_true', help='test with validation')
@@ -55,13 +55,13 @@ parser.add_argument('--n_cate', type=int, default=2, help='category num of items
 
 # params for diffusion
 parser.add_argument('--mean_type', type=str, default='x0', help='MeanType for diffusion: x0, eps')
-parser.add_argument('--steps', type=int, default=5, help='diffusion steps')
+parser.add_argument('--steps', type=int, default=20, help='diffusion steps')
 parser.add_argument('--noise_schedule', type=str, default='linear-var', help='the schedule for noise generating')
 parser.add_argument('--noise_scale', type=float, default=0.1, help='noise scale for noise generating')
 parser.add_argument('--noise_min', type=float, default=0.0001)
 parser.add_argument('--noise_max', type=float, default=0.02)
 parser.add_argument('--sampling_noise', type=bool, default=False, help='sampling with noise or not')
-parser.add_argument('--sampling_steps', type=int, default=0, help='steps for sampling/denoising')
+parser.add_argument('--sampling_steps', type=int, default=5, help='steps for sampling/denoising')
 parser.add_argument('--classifier', type=str, default='age', help='conditional information')
 
 args = parser.parse_args()
@@ -127,20 +127,15 @@ label_encoder = preprocessing.LabelEncoder()
 age = np.array(np.load(age_path, allow_pickle=True))
 age = label_encoder.fit_transform(age)
 
-if args.classifier == 'age':
-    classes = age
-    n_classes = 7
-elif args.classifier == 'gender':
-    classes = gender
-    n_classes = 2
+### DATA LOADER
 
-train_dataset = data_utils.Conditional_DataDiffusion(torch.FloatTensor(train_data.A), torch.IntTensor(classes))
+train_dataset = data_utils.Conditional_DataDiffusion(torch.FloatTensor(train_data.A), torch.IntTensor(gender), torch.IntTensor(age))
 
 train_loader = DataLoader(train_dataset, batch_size=args.batch_size, pin_memory=True, shuffle=True, num_workers=4, worker_init_fn=worker_init_fn)
 test_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False)
 
 if args.tst_w_val:
-    tv_dataset = data_utils.Conditional_DataDiffusion(torch.FloatTensor(train_data.A) + torch.FloatTensor(valid_y_data.A), torch.IntTensor(classes))
+    tv_dataset = data_utils.Conditional_DataDiffusion(torch.FloatTensor(train_data.A) + torch.FloatTensor(valid_y_data.A), torch.IntTensor(gender), torch.IntTensor(age))
     test_twv_loader = DataLoader(tv_dataset, batch_size=args.batch_size, shuffle=False)
 mask_tv = train_data + valid_y_data
 
@@ -158,28 +153,14 @@ diffusion = gd.GaussianDiffusion(mean_type, args.noise_schedule, \
         args.noise_scale, args.noise_min, args.noise_max, args.steps, device).to(device)
 
 ### Build Autoencoder & MLP ###
-model_path = "checkpoints/Age/"
-if args.dataset == "amazon-book_clean":
-    model_name = "amazon-book_clean_0.0005lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate2_in[300]_out[]_lam0.05_dims[300]_emb10_x0_steps5_scale0.5_min0.001_max0.005_sample0_reweight1_log.pth"
-    AE_name = "amazon-book_clean_0.0005lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate2_in[300]_out[]_lam0.05_dims[300]_emb10_x0_steps5_scale0.5_min0.001_max0.005_sample0_reweight1_log_AE.pth"
-elif args.dataset == "yelp_clean":
-    model_name = "yelp_clean_0.0005lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate2_in[300]_out[]_lam0.03_dims[300]_emb10_x0_steps5_scale0.01_min0.005_max0.01_sample0_reweight0_log.pth"
-    AE_name = "yelp_clean_0.0005lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate2_in[300]_out[]_lam0.03_dims[300]_emb10_x0_steps5_scale0.01_min0.005_max0.01_sample0_reweight0_log_AE.pth"
-elif args.dataset == "ml-1m_clean":
+model_path = "checkpoints/Age+Gender/"
+
+if args.dataset == "ml-1m_clean":
     model_name = "ml-1m_0.0001lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate3_in[300]_out[]_lam0.005_dims[300]_emb10_ModelMeanType.EPSILON_steps20_scale0.1_min0.0001_max0.02_sample5_reweightTrue_log.pth"
     AE_name = "ml-1m_0.0001lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate3_in[300]_out[]_lam0.005_dims[300]_emb10_ModelMeanType.EPSILON_steps20_scale0.1_min0.0001_max0.02_sample5_reweightTrue_log_AE.pth"
-elif args.dataset == "amazon-book_noisy":
-    model_name = "amazon-book_noisy_0.0005lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate2_in[300]_out[]_lam0.07_dims[300]_emb10_x0_steps5_scale0.5_min0.001_max0.005_sample0_reweight1_log.pth"
-    AE_name = "amazon-book_noisy_0.0005lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate2_in[300]_out[]_lam0.07_dims[300]_emb10_x0_steps5_scale0.5_min0.001_max0.005_sample0_reweight1_log_AE.pth"
-elif args.dataset == "yelp_noisy":
-    model_name = "yelp_noisy_0.0005lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate2_in[300]_out[]_lam0.03_dims[300]_emb10_x0_steps5_scale0.01_min0.005_max0.01_sample0_reweight0_log.pth"
-    AE_name = "yelp_noisy_0.0005lr1_0.0001lr2_0.0wd1_0.0wd2_bs400_cate2_in[300]_out[]_lam0.03_dims[300]_emb10_x0_steps5_scale0.01_min0.005_max0.01_sample0_reweight0_log_AE.pth"
-elif args.dataset == "ml-1m_noisy":
-    model_name = "ml-1m_noisy_0.001lr1_0.0005lr2_0.0wd1_0.0wd2_bs400_cate2_in[300]_out[]_lam0.03_dims[300]_emb10_x0_steps100_scale0.005_min0.005_max0.02_sample0_reweight1_log.pth"
-    AE_name = "ml-1m_noisy_0.001lr1_0.0005lr2_0.0wd1_0.0wd2_bs400_cate2_in[300]_out[]_lam0.03_dims[300]_emb10_x0_steps100_scale0.005_min0.005_max0.02_sample0_reweight1_log_AE.pth"
 
-model = torch.load(model_path + model_name, map_location=torch.device('cpu')).to(device)
-Autoencoder = torch.load(model_path + AE_name, map_location=torch.device('cpu')).to(device)
+model = torch.load(model_path + model_name).to(device)
+Autoencoder = torch.load(model_path + AE_name).to(device)
 
 def evaluate(data_loader, data_te, mask_his, topN):
     model.eval()
@@ -198,16 +179,17 @@ def evaluate(data_loader, data_te, mask_his, topN):
     with torch.no_grad():
         p_bar = tqdm(data_loader)
 
-        for batch_idx, (x, c) in enumerate(p_bar):
+        for batch_idx, (x, gender, age) in enumerate(p_bar):
             x = x.to(device)
-            c = c.to(device)
+            gender = gender.to(device)
+            age = age.to(device)
 
             # mask map
             his_data = mask_his[e_idxlist[batch_idx*args.batch_size:batch_idx*args.batch_size+len(x)]]
 
-            _, x_latent, _ = Autoencoder.Encode(x)
-            x_latent_recon = diffusion.p_sample(model, x_latent, c, args.sampling_steps, args.sampling_noise)
-            prediction = Autoencoder.Decode(x_latent_recon)  # [batch_size, n1_items + n2_items + n3_items]
+            _, batch_latent, _ = Autoencoder.Encode(x)
+            batch_latent_recon = diffusion.p_sample(model, batch_latent, gender, age, args.sampling_steps, args.sampling_noise)
+            prediction = Autoencoder.Decode(batch_latent_recon)  # [batch_size, n1_items + n2_items + n3_items]
 
             prediction[his_data.nonzero()] = -np.inf  # mask ui pairs in train & validation set
 
