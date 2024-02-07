@@ -119,27 +119,22 @@ label_encoder = preprocessing.LabelEncoder()
 age = np.array(np.load(age_path, allow_pickle=True))
 age = label_encoder.fit_transform(age)
 
-if args.classifier == 'age':
-    classes = age
-    n_classes = 7
-elif args.classifier == 'gender':
-    classes = gender
-    n_classes = 2
+### DATA LOADER
 
-train_dataset = data_utils.Conditional_DataDiffusion(torch.FloatTensor(train_data.A), torch.IntTensor(classes))
+train_dataset = data_utils.Conditional_DataDiffusion(torch.FloatTensor(train_data.A), torch.IntTensor(gender), torch.IntTensor(age)
 
 train_loader = DataLoader(train_dataset, batch_size=args.batch_size, pin_memory=True, shuffle=True, num_workers=4, worker_init_fn=worker_init_fn)
 test_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False)
 
 if args.tst_w_val:
-    tv_dataset = data_utils.Conditional_DataDiffusion(torch.FloatTensor(train_data.A) + torch.FloatTensor(valid_y_data.A), torch.IntTensor(classes))
+    tv_dataset = data_utils.Conditional_DataDiffusion(torch.FloatTensor(train_data.A) + torch.FloatTensor(valid_y_data.A), torch.IntTensor(gender), torch.IntTensor(age)
     test_twv_loader = DataLoader(tv_dataset, batch_size=args.batch_size, shuffle=False)
 mask_tv = train_data + valid_y_data
 
 print('data ready.')
 
 ### Build Autoencoder ###
-emb_path = args.emb_path + args.dataset + '/item_emb.npy'
+emb_path = args.data_path + 'item_emb.npy'
 item_emb = torch.from_numpy(np.load(emb_path, allow_pickle=True))
 assert len(item_emb) == n_item
 out_dims = eval(args.out_dims)
@@ -161,7 +156,7 @@ diffusion = gd.GaussianDiffusion(mean_type, args.noise_schedule, \
 latent_size = in_dims[-1]
 mlp_out_dims = eval(args.mlp_dims) + [latent_size]
 mlp_in_dims = mlp_out_dims[::-1]
-model = DNN(mlp_in_dims, mlp_out_dims, args.emb_size, n_classes ,time_type="cat", norm=args.norm, act_func=args.mlp_act_func).to(device)
+model = DNN(mlp_in_dims, mlp_out_dims, args.emb_size, args.item_size, time_type="cat", norm=args.norm, act_func=args.mlp_act_func).to(device)
 
 param_num = 0
 AE_num = sum([param.nelement() for param in Autoencoder.parameters()])
@@ -213,16 +208,17 @@ def evaluate(data_loader, data_te, mask_his, topN):
     with torch.no_grad():
         p_bar = tqdm(data_loader)
 
-        for batch_idx, (x, c) in enumerate(p_bar):
+        for batch_idx, (x, gender, age) in enumerate(p_bar):
             x = x.to(device)
-            c = c.to(device)
+            gender = gender.to(device)
+            age = age.to(device)
 
             # mask map
             his_data = mask_his[e_idxlist[batch_idx*args.batch_size:batch_idx*args.batch_size+len(x)]]
 
-            _, x_latent, _ = Autoencoder.Encode(x)
-            x_latent_recon = diffusion.p_sample(model, x_latent, c, args.sampling_steps, args.sampling_noise)
-            prediction = Autoencoder.Decode(x_latent_recon)  # [batch_size, n1_items + n2_items + n3_items]
+            _, batch_latent, _ = Autoencoder.Encode(x)
+            batch_latent_recon = diffusion.p_sample(model, batch_latent, gender, age, args.sampling_steps, args.sampling_noise)
+            prediction = Autoencoder.Decode(batch_latent_recon)  # [batch_size, n1_items + n2_items + n3_items]
 
             prediction[his_data.nonzero()] = -np.inf  # mask ui pairs in train & validation set
 
@@ -287,9 +283,10 @@ for epoch in range(1, args.epochs + 1):
     
     p_bar = tqdm(train_loader)
 
-    for x, c in p_bar:
+    for x, gender, age in p_bar:
         x = x.to(device)
-        c = c.to(device)
+        gender = gender.to(device)
+        age = age.to(device)
 
         batch_count += 1
         optimizer1.zero_grad()
@@ -297,7 +294,7 @@ for epoch in range(1, args.epochs + 1):
 
         batch_cate, batch_latent, vae_kl = Autoencoder.Encode(x)
 
-        terms = diffusion.training_losses(model, batch_latent, c, args.reweight)
+        terms = diffusion.training_losses(model, batch_latent, gender, age, args.reweight)
         elbo = terms["loss"].mean()  # loss from diffusion
         batch_latent_recon = terms["pred_xstart"]
 
