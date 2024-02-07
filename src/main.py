@@ -43,8 +43,8 @@ def seed_worker(worker_id):
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', type=str, default='yelp_clean', help='choose the dataset')
-parser.add_argument('--data_path', type=str, default='../datasets/', help='load data path')
-parser.add_argument('--emb_path', type=str, default='../datasets/')
+parser.add_argument('--data_path', type=str, default='../datasets/ml-1m_clean/', help='load data path')
+parser.add_argument('--emb_path', type=str, default='../datasets/ml-1m_clean/')
 parser.add_argument('--lr1', type=float, default=0.0001, help='learning rate for Autoencoder')
 parser.add_argument('--lr2', type=float, default=0.0001, help='learning rate for MLP')
 parser.add_argument('--wd1', type=float, default=0.0, help='weight decay for Autoencoder')
