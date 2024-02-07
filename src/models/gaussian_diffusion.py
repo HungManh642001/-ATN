@@ -254,21 +254,7 @@ class GaussianDiffusion(nn.Module):
         """
         B, C = x.shape[:2]
         assert t.shape == (B, )
-
-        # double the batch
-        gender = gender.repeat(2)
-        gender_mask = gender_mask.repeat(2)
-        gender_mask[B:] = 1. # makes second half of batch context free
-
-        # double the batch
-        age = age.repeat(2)
-        age_mask = age_mask.repeat(2)
-        age_mask[B:] = 1. # makes second half of batch context free
-
-        x = x.repeat(2, 1)
-        t = t.repeat(2)
-
-        print(x.shape, t.shape)
+        
         model_output = model(x, gender, age, gender_mask, age_mask, t)
 
         model_variance = self.posterior_variance
@@ -280,13 +266,7 @@ class GaussianDiffusion(nn.Module):
         if self.mean_type == ModelMeanType.START_X:
             pred_xstart = model_output
         elif self.mean_type == ModelMeanType.EPSILON:
-            eps1 = model_output[:B]
-            eps2 = model_output[B:]
-            guide_w = 0.5
-            eps = (1 + guide_w) * eps1 - guide_w * eps2
-
-            x = x[:B]
-            t = t[:B]
+            eps = model_output
             pred_xstart = self._predict_xstart_from_eps(x, t, eps=eps)
         else:
             raise NotImplementedError(self.mean_type)
