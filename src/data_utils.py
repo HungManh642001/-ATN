@@ -140,12 +140,14 @@ class SubData(Dataset):
 
 
 class Conditional_DataDiffusion(Dataset):
-    def __init__(self, data, c):
+    def __init__(self, data, gender, age):
         self.data = data
-        self.c = c
+        self.gender = gender
+        self.age = age
     def __getitem__(self, index):
         item = self.data[index]
-        c = self.c[index]
-        return item, c
+        gender = self.gender[index]
+        age = self.age[index]
+        return item, gender, age
     def __len__(self):
         return len(self.data)
