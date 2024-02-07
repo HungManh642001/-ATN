@@ -55,7 +55,7 @@ class AutoEncoder(nn.Module):
                     raise ValueError
             decoder_modules.pop()
             self.decoder = nn.Sequential(*decoder_modules)
-        
+
         else:
             self.cluster_ids, _ = kmeans(X=item_emb, num_clusters=n_cate, distance='euclidean', device=device)
             # cluster_ids(labels): [0, 1, 2, 2, 1, 0, 0, ...]
@@ -121,9 +121,9 @@ class AutoEncoder(nn.Module):
                             raise ValueError
                     decoder_modules[i].pop()
                 self.decoder = nn.ModuleList([nn.Sequential(*decoder_modules[i]) for i in range(n_cate)])
-            
+
         self.apply(xavier_normal_initialization)
-        
+
     def Encode(self, batch):
         batch = self.dropout(batch)
         if self.n_cate == 1:
@@ -135,12 +135,12 @@ class AutoEncoder(nn.Module):
                 latent = self.reparamterization(mu, logvar)
             else:
                 latent = mu
-            
+
             kl_divergence = -0.5 * torch.mean(torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1))
 
             return batch, latent, kl_divergence
 
-        else: 
+        else:
             batch_cate = []
             for i in range(self.n_cate):
                 batch_cate.append(batch[:, self.category_idx[i]])
@@ -163,12 +163,12 @@ class AutoEncoder(nn.Module):
             kl_divergence = -0.5 * torch.mean(torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1))
 
             return torch.cat(tuple(batch_cate), dim=-1), latent, kl_divergence
-    
+
     def reparamterization(self, mu, logvar):
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return eps.mul(std).add_(mu)
-    
+
     def Decode(self, batch):
         if len(self.out_dims) == 0 or self.n_cate == 1:  # one-layer decoder
             return self.decoder(batch)
@@ -185,7 +185,7 @@ class AutoEncoder(nn.Module):
             pred = torch.cat(tuple(pred_cate), dim=-1)
 
             return pred
-    
+
 def compute_loss(recon_x, x):
     return -torch.mean(torch.sum(F.log_softmax(recon_x, 1) * x, -1))  # multinomial log likelihood in MultVAE
 
@@ -202,5 +202,4 @@ def xavier_normal_initialization(module):
     if isinstance(module, nn.Linear):
         xavier_normal_(module.weight.data)
         if module.bias is not None:
-            constant_(module.bias.data, 0)            
-                
+            constant_(module.bias.data, 0)
