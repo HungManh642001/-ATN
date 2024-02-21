@@ -54,7 +54,7 @@ parser.add_argument('--log_name', type=str, default='log', help='the log name')
 parser.add_argument('--n_cate', type=int, default=3, help='category num of items')
 
 # params for diffusion
-parser.add_argument('--mean_type', type=str, default='x0', help='MeanType for diffusion: x0, eps')
+parser.add_argument('--mean_type', type=str, default='eps', help='MeanType for diffusion: x0, eps')
 parser.add_argument('--steps', type=int, default=20, help='diffusion steps')
 parser.add_argument('--noise_schedule', type=str, default='linear-var', help='the schedule for noise generating')
 parser.add_argument('--noise_scale', type=float, default=0.1, help='noise scale for noise generating')
