@@ -26,7 +26,7 @@ import evaluate_utils
 import data_utils
 from copy import deepcopy
 from sklearn import preprocessing
-import tqdm
+from tqdm import tqdm
 
 import random
 random_seed = 1
@@ -51,7 +51,7 @@ parser.add_argument('--tst_w_val', action='store_true', help='test with validati
 parser.add_argument('--cuda', action='store_true', help='use CUDA')
 parser.add_argument('--gpu', type=str, default='0', help='gpu card ID')
 parser.add_argument('--log_name', type=str, default='log', help='the log name')
-parser.add_argument('--n_cate', type=int, default=2, help='category num of items')
+parser.add_argument('--n_cate', type=int, default=3, help='category num of items')
 
 # params for diffusion
 parser.add_argument('--mean_type', type=str, default='x0', help='MeanType for diffusion: x0, eps')
